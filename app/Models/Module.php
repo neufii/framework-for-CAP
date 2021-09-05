@@ -16,7 +16,7 @@ class Module extends Model
     }
 
     public function compatibleIndicators(){
-        return $this->belongsToMany('App\Models\Module', 'indicator_module', 'compatible_module_id', 'indicator_id');
+        return $this->belongsToMany('App\Models\Indicator', 'indicator_module', 'compatible_module_id', 'indicator_id');
     }
 
     //scope
@@ -54,10 +54,6 @@ class Module extends Model
 
     public function scopeDistanceCalculator($query){
         return $query->where('name', 'distance_calculator');
-    }
-
-    public function scopeGeneratorEvaluator($query){
-        return $query->where('name', 'generator_evaluator');
     }
 
     //accessor

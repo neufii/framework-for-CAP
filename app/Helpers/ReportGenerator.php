@@ -5,6 +5,8 @@ namespace App\Helpers;
 use Symfony\Component\Process\Process;
 use Symfony\Component\Process\Exception\ProcessFailedException;
 
+use App\Modules\ModuleManager;
+
 use App\Models\QuestionInstance;
 use App\Models\QuestionStat;
 use App\Models\Indicator;
@@ -21,7 +23,7 @@ class ReportGenerator{
         }
 
         if(!isset($indicatorId)){
-            $indicator = $generator->compatibleIndicators()->first();
+            $indicator = $generator->compatibleIndicators->first();
         }
         else{
             $indicator = Indicator::findOrFail($indicatorId);
@@ -30,43 +32,44 @@ class ReportGenerator{
         echo("Generator Evaluation:\n Generator ID: ".$generator->id."\n");
         echo("Start:\t".date("Y-m-d H:i:s")."\n");
 
-        $testQuestionIds = [];
         $firstGeneratedQuestion = 0;
-
-        $temporaryDirectory = (new TemporaryDirectory())->create();
-        $filename = $temporaryDirectory->path('distance.dat');
-
-        $fp = fopen($filename, 'a');
+        $questions = [];
 
         for($i=0;$i<$numberOfQuestions;$i++){
             //prepare question
             $questionI = QuestionInstance::generate($indicator,$preferredLevel,$generator);
             if($i == 0) $firstGeneratedQuestion = $questionI->id;
-            $testQuestionIds[] = $questionI->id;
+            array_push($questions,$questionI->question);
 
-            for($j=0;$j<$numberOfQuestions;$j++){
-                //create distance matrix
-                if($j == $numberOfQuestions-1){
-                    fwrite($fp, '0');
-                }
-                else if($i == $j || $i < $j){
-                    fwrite($fp, '0,');
-                }
-                else{
-                    fwrite($fp, $questionI->getDistance(QuestionInstance::findOrFail($testQuestionIds[$j])));  
-                    fwrite($fp, ',');
-                }
-            }
-            fwrite($fp, "\n");
+            // for($j=0;$j<$numberOfQuestions;$j++){
+            //     //create distance matrix
+            //     if($j == $numberOfQuestions-1){
+            //         fwrite($fp, '0');
+            //     }
+            //     else if($i == $j || $i < $j){
+            //         fwrite($fp, '0,');
+            //     }
+            //     else{
+            //         fwrite($fp, $questionI->getDistance(QuestionInstance::findOrFail($testQuestionIds[$j])));  
+            //         fwrite($fp, ',');
+            //     }
+            // }
+            // fwrite($fp, "\n");
             if($i%4 == 0) echo("question / \t".$i."\r");
             if($i%4 == 1) echo("question - \t".$i."\r");
             if($i%4 == 2) echo("question \\ \t".$i."\r");
             if($i%4 == 3) echo("question - \t".$i."\r");
         }
-        fclose($fp);
+
+        //calculate distance
+        $distanceDirectory = (new TemporaryDirectory())->create();
+        $distanceFile = $distanceDirectory->path('distance.dat');
+        $dfp = fopen($distanceFile, 'a');
+        $distanceMatrix = ModuleManager::runProcess($indicator->compatibleModules()->distanceCalculator()->active()->latest()->first(),$questions);
+        fwrite($dfp, $distanceMatrix);
 
         //clustering
-        $processArray = ['python3', __DIR__."/Scripts/evaluator.py", $filename, $threshold];
+        $processArray = ['python3', __DIR__."/Scripts/evaluator.py", $distanceFile, $threshold];
 
         $process = new Process($processArray);
         $process->run();
@@ -75,7 +78,7 @@ class ReportGenerator{
         }
 
         $output = json_decode($process->getOutput());
-        $temporaryDirectory->delete();
+        $distanceDirectory->delete();
 
         $ids = [];
         foreach($output->sample_ids_in_largest_cluster as $id){
@@ -100,7 +103,7 @@ class ReportGenerator{
         fwrite($report, "Sample Question Instances' ID in Largest Cluster:\t".implode(", ",$ids)."\n");
         fclose($report);
 
-        return $output;
+        return "Generator Report Generated";
     }
 
     public static function evaluateSystem(){

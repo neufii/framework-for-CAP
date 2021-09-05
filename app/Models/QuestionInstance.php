@@ -209,15 +209,6 @@ class QuestionInstance extends Model
         return ['targetLevel'=>$targetLevel, 'questionInstance' => $selectedInstance];
     }
 
-    public function getDistance($questionInstance){
-        $calculator = $this->indicator()->first()->compatibleModules()->distanceCalculator()->active()->latest()->first();
-        if(!isset($calculator)){
-            //no calculator
-            return;
-        }
-        return ModuleManager::runProcess($calculator, $this->question, $questionInstance->question);
-    }
-
     public function getDisplayableQuestion(){
         $questionDisplay = $this->indicator()->first()->compatibleModules()->questionDisplay()->active()->latest()->first();
         if(!isset($questionDisplay)){

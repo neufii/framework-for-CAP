@@ -1,0 +1,11 @@
+Report Date:	2021-08-21 06:39:37
+Generator ID:	1
+Indicator ID:	1
+Threshold:	0.5
+Total Generated Questions:	10
+
+==== Result ====
+Total Clusters:	6
+Average Questions Per Cluster:	1.6666666666667	Standard Deviation:	1.1055415967851
+Total Questions in Largest Cluster:	4
+Sample Question Instances' ID in Largest Cluster:	548, 549, 551, 553
