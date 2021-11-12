@@ -228,6 +228,10 @@ return [
         'URL' => Illuminate\Support\Facades\URL::class,
         'Validator' => Illuminate\Support\Facades\Validator::class,
         'View' => Illuminate\Support\Facades\View::class,
+
+        'LearnerService' => App\Services\LearnerService::class,
+        'QuestionInstanceService' => App\Services\QuestionInstanceService::class,
+        
         'ReportGenerator' => App\Helpers\ReportGenerator::class,
     ],
 

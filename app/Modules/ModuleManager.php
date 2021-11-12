@@ -10,8 +10,6 @@ class ModuleManager
 {
     public static function runProcess($module, ...$parameters){
         $output = null;
-        $preprocessData = null;
-        $postprocessData = null;
 
         $moduleName = $module->name;
 

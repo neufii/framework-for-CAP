@@ -4,7 +4,7 @@ use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
 
-class CreateModulesTable extends Migration
+class CreateScriptsTable extends Migration
 {
     /**
      * Run the migrations.
@@ -13,11 +13,11 @@ class CreateModulesTable extends Migration
      */
     public function up()
     {
-        Schema::create('modules', function (Blueprint $table) {
+        Schema::create('scripts', function (Blueprint $table) {
             $table->id();
             $table->string('name');
-            $table->string('path');
-            $table->string('run_command');
+            $table->string('path')->nullable();
+            $table->string('type')->nullable();
             $table->string('is_active')->default(true);
             $table->timestamps();
         });

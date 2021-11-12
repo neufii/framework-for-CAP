@@ -5,7 +5,7 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
-class Module extends Model
+class Script extends Model
 {
     use HasFactory;
 
@@ -16,7 +16,7 @@ class Module extends Model
     }
 
     public function compatibleIndicators(){
-        return $this->belongsToMany('App\Models\Indicator', 'indicator_module', 'compatible_module_id', 'indicator_id');
+        return $this->belongsToMany('App\Models\Indicator', 'indicator_script', 'compatible_script_id', 'indicator_id');
     }
 
     //scope
@@ -36,16 +36,16 @@ class Module extends Model
         return $query->where('name', 'selector');
     }
 
-    public function scopeChecker($query){
-        return $query->where('name', 'checker');
+    public function scopeAnswerChecker($query){
+        return $query->where('name', 'answerChecker');
     }
 
     public function scopeQuestionDisplay($query){
         return $query->where('name', 'question_display');
     }
 
-    public function scopeSolutionDisplay($query){
-        return $query->where('name', 'solution_display');
+    public function scopeFeedbackDisplay($query){
+        return $query->where('name', 'feedback_display');
     }
 
     public function scopeUpdater($query){

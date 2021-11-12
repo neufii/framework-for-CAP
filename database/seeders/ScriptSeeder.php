@@ -3,9 +3,9 @@
 namespace Database\Seeders;
 
 use Illuminate\Database\Seeder;
-use App\Models\Module;
+use App\Models\Script;
 
-class ModuleSeeder extends Seeder
+class ScriptSeeder extends Seeder
 {
     /**
      * Run the database seeds.
@@ -15,45 +15,45 @@ class ModuleSeeder extends Seeder
     public function run()
     {
         //create new modules
-        $generator = new Module();
+        $generator = new Script();
         $generator->name = 'generator';
         $generator->path = '/Users/neufii/Documents/M.Eng/IIAFramework/app/Modules/Scripts/generator1.py';
-        $generator->run_command = 'python3';
+        $generator->type = 'python3';
         $generator->save();
         $generator->compatibleIndicators()->sync([1]);
 
-        $generator = new Module();
+        $generator = new Script();
         $generator->name = 'generator';
         $generator->path = '/Users/neufii/Documents/M.Eng/IIAFramework/app/Modules/Scripts/generator2.py';
-        $generator->run_command = 'python3';
+        $generator->type = 'python3';
         $generator->save();
         $generator->compatibleIndicators()->sync([2]);
 
-        $checker = new Module();
+        $checker = new Script();
         $checker->name = 'checker';
         $checker->path = '/Users/neufii/Documents/M.Eng/IIAFramework/app/Modules/Scripts/answerChecker.py';
-        $checker->run_command = 'python3';
+        $checker->type = 'python3';
         $checker->save();
         $checker->compatibleIndicators()->sync([1,2]);
 
-        $questionDisplay = new Module();
+        $questionDisplay = new Script();
         $questionDisplay->name = 'question_display';
         $questionDisplay->path = '/Users/neufii/Documents/M.Eng/IIAFramework/app/Modules/Scripts/questionDisplay.py';
-        $questionDisplay->run_command = 'python3';
+        $questionDisplay->type = 'python3';
         $questionDisplay->save();
         $questionDisplay->compatibleIndicators()->sync([1,2]);
 
-        $solutionDisplay = new Module();
-        $solutionDisplay->name = 'solution_display';
-        $solutionDisplay->path = '/Users/neufii/Documents/M.Eng/IIAFramework/app/Modules/Scripts/solutionDisplay.py';
-        $solutionDisplay->run_command = 'python3';
+        $solutionDisplay = new Script();
+        $solutionDisplay->name = 'feedback_display';
+        $solutionDisplay->path = '/Users/neufii/Documents/M.Eng/IIAFramework/app/Modules/Scripts/feedbackDisplay.py';
+        $solutionDisplay->type = 'python3';
         $solutionDisplay->save();
         $solutionDisplay->compatibleIndicators()->sync([1,2]);
 
-        $distanceCalculator = new Module();
+        $distanceCalculator = new Script();
         $distanceCalculator->name = 'distance_calculator';
         $solutionDisplay->path = '/Users/neufii/Documents/M.Eng/IIAFramework/app/Modules/Scripts/distanceCalculator.py';
-        $distanceCalculator->run_command = 'python3';
+        $distanceCalculator->type = 'python3';
         $distanceCalculator->save();
         $distanceCalculator->compatibleIndicators()->sync([1,2]);
     }

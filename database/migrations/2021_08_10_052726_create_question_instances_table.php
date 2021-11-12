@@ -19,7 +19,15 @@ class CreateQuestionInstancesTable extends Migration
             $table->json('question');
             $table->json('answer');
             $table->json('solution');
-            $table->foreignId('generator_id')->constrained('modules')->onDelete('cascade');
+            $table->foreignId('generator_script_id')->nullable()->constrained('scripts')->onDelete('set null');
+            $table->integer('initial_level')->nullable();
+            $table->double('rating')->default(0);
+            $table->integer('upvotes')->default(0);
+            $table->integer('downvotes')->default(0);
+            $table->integer('total_attempts')->default(0);
+            $table->integer('correct_attempts')->default(0);
+            $table->double('average_time_used')->nullable();
+            $table->boolean('is_active')->default(true);
             $table->timestamps();
         });
     }

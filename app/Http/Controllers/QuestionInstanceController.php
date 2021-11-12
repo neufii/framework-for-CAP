@@ -6,21 +6,30 @@ use App\Models\Indicator;
 use App\Models\QuestionInstance;
 use App\Models\Learner;
 
+use App\Services\QuestionInstanceService;
+use App\Services\LearnerService;
+
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Validator;
 use Response;
 
 class QuestionInstanceController extends Controller
 {
+    private $service;
+
+    public function __construct(QuestionInstanceService $service){
+        $this->service = $service;
+    }
+
     public function getQuestion($indicatorId, Request $request)
     {
         $params = [
             'includeHistory' => filter_var($request->input('indclude_history',false), FILTER_VALIDATE_BOOLEAN),
             'preferredLevel' => $request->input('level'),
-            'userId' => $request->input('user_id')
+            'learnerId' => $request->input('id')
         ];
 
-        $learner = Learner::where('user_id',$params['userId'])->first();
+        $learner = Learner::findOrFail($params['learnerId']);
         if(!isset($learner)){
             return response()->json(['message' => 'Learner with user id '.$params['userId'].' not found'], 404);
         }
@@ -28,22 +37,26 @@ class QuestionInstanceController extends Controller
         $indicator = Indicator::findOrFail($indicatorId);
 
         //check compatible question
-        $instanceData = QuestionInstance::selectQuestion($learner, $indicator, $params['includeHistory'], $params['preferredLevel']);
+        $instanceData = $this->service->select($learner, $indicator, $params['includeHistory'], $params['preferredLevel']);
+        $instance = $instanceData['questionInstance'];
 
-        $instance=$instanceData['questionInstance'];
         if(!isset($instance)){
             //nothing return from item bank
-            //if no level preference, check current level of a learner
-            $targetLevel = $instanceData['targetLevel'];
-            $instance = QuestionInstance::generate($indicator,$targetLevel);
+            $instance = $this->service->generate($indicator,$instanceData['targetLevel']);
         }
+        
         if(!isset($instance)){
             //nothing return from generator
             return response()->json(['message' => 'Cannot Generate Question Instance'], 500);
         }
 
         //generate displayable question
-        $script = $instance->getDisplayableQuestion();
+        $script = $this->service->setQuestionInstance($instance)->getDisplayableQuestionScript();
+
+        if(!isset($script)){
+            //nothing return from question display
+            return response()->json(['message' => 'Cannot Generate Displayable Question Script'], 500);
+        }
 
         return Response::json([
             'status' => 'completed',
@@ -52,7 +65,10 @@ class QuestionInstanceController extends Controller
                 'instance'=> [
                     'id'=> $instance->id,
                     'indicator'=> $instance->indicator,
-                    'statistic' => $instance->statistic,
+                    'initial_level' => $instance->initial_level,
+                    'rating' => $instance->rating,
+                    'total_attempts' => $instance->total_attempts,
+                    'average_time_used' => $instance->average_time_used,
                 ], 
                 'script'=>$script,
             ]
@@ -63,7 +79,7 @@ class QuestionInstanceController extends Controller
     public function submit(Request $request, $id)
     {
         $validator = Validator::make($request->all(), [
-            'user_id' => ['required','integer'],
+            'learner_id' => ['required','integer'],
             'answer' => ['required', 'string'],
             'time_used' => ['required', 'integer'],
          ]);
@@ -72,16 +88,26 @@ class QuestionInstanceController extends Controller
             return response()->json($validator->errors(), 422);
         }
 
-        $learner = Learner::where('user_id',$request['user_id'])->first();
+        $learner = Learner::findOrFail($request['learner_id']);
         if(!isset($learner)){
-            return response()->json(['message' => 'Learner with user id '.$request['user_id'].' not found'], 404);
+            return response()->json(['message' => 'Learner id '.$request['learner_id'].' not found'], 404);
         }
         
         $question = QuestionInstance::findOrFail($id);
+        $isCorrect = $this->service->setQuestionInstance($instance)->check($learner, $request['answer']);
 
-        $isCorrect = $question->check($request['answer']);
-        $question->updateRating($learner, $isCorrect);
-        $question->addHistory($learner, $request['answer'],$isCorrect, $request['time_used']);
+        //update rating
+        $isCorrect = $this->service->setQuestionInstance($instance)->updateRating($learner, $isCorrect);
+
+        //update history
+        $this->service->setQuestionInstance($instance)->addHistory($learner, $learnerAnswer,$isCorrect, $timeUsed);
+
+        //feedback
+        $script = $this->service->setQuestionInstance($instance)->getDisplayableFeedbackScript($isCorrect, $request['answer']);
+
+        //learner's rating
+        $learnerService = new LearnerService($learner);
+        $learnerRating = $learnerService->getStatistic($question->indicator)->rating;
 
         return Response::json([
             'status' => 'completed',
@@ -90,13 +116,14 @@ class QuestionInstanceController extends Controller
                 'question_id'=> $question->id,
                 'is_correct'=> $isCorrect,
                 'time_used'=> $request['time_used'],
-                'question_rating' => $question->rating,
-                'learner_rating' => $learner->getRating($question->indicator()->first()->id)
+                'question_rating' => QuestionInstance::findOrFail($id)->rating, //get updated rating
+                'learner_rating' => $learnerRating,
+                'script' => $script,
             ]
         ], 200);
     }
 
-    public function updateFeedback(Request $request, $id)
+    public function vote(Request $request, $id)
     {
         $validator = Validator::make($request->all(), [
             'action' => ['required', 'in:upvote,downvote']
@@ -108,26 +135,12 @@ class QuestionInstanceController extends Controller
 
         $question = QuestionInstance::findOrFail($id);
 
-        if($request['action'] == 'upvote') $question->upvote();
-        else if($request['action'] == 'downvote') $question->downvote();
+        $votes = $this->service->setQuestionInstance($instance)->vote($request['action']);
 
         return Response::json([
             'status' => 'completed',
-            'message' => 'Question ID:'.$id.' Feedback Updated',
-            'data' => $question->statistic()->first(),
-        ], 200);
-    }
-
-    public function getSolution($id)
-    {
-        $question = QuestionInstance::findOrFail($id);
-
-        return Response::json([
-            'status' => 'completed',
-            'message' => 'Solution of Question ID:'.$id.' Retreived',
-            'data' => [
-                "script"=>$question->getDisplayableSolution()
-            ]
+            'message' => 'Question ID:'.$id.' Vote Counts Updated',
+            'data' => $votes,
         ], 200);
     }
 }

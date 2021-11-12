@@ -29,6 +29,6 @@ Route::resource('learners',LearnerController::class)->except([
 Route::get('indicators/{indicatorId}/get-question',[QuestionInstanceController::class, 'getQuestion']);
 
 Route::put('questions/{questionId}/submit', [QuestionInstanceController::class, 'submit']);
-Route::put('questions/{questionId}/feedback',[QuestionInstanceController::class, 'updateFeedback']);
+Route::put('questions/{questionId}/vote',[QuestionInstanceController::class, 'vote']);
 
 Route::get('questions/{id}/solution',[QuestionInstanceController::class, 'getSolution']);

@@ -22,7 +22,7 @@ class Indicator extends Model
         ->withTimestamps();
     }
 
-    public function compatibleModules(){
-        return $this->belongsToMany('App\Models\Module', 'indicator_module', 'indicator_id', 'compatible_module_id');
+    public function compatibleScripts(){
+        return $this->belongsToMany('App\Models\Script', 'indicator_script', 'indicator_id', 'compatible_script_id');
     }
 }

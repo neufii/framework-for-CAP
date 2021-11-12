@@ -5,12 +5,8 @@ import random
 import json
 import sys
 
-f = open(sys.argv[1], "r")
-argv = json.loads(f.read())
-indicator = argv['0']
-
 try:
-    targetLevel = argv['1']
+    targetLevel = sys.argv[1]
 except IndexError:
     targetLevel = 2 #default slightly easy
 

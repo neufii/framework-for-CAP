@@ -15,7 +15,6 @@ class CreateLearnersTable extends Migration
     {
         Schema::create('learners', function (Blueprint $table) {
             $table->id();
-            $table->unsignedBigInteger('user_id')->nullable();
             $table->timestamps();
         });
     }

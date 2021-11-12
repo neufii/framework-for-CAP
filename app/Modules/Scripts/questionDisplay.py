@@ -2,9 +2,7 @@ import sys
 import re
 import json
 
-f = open(sys.argv[1], "r")
-argv = json.loads(f.read())
-raw = argv['0']
+raw = sys.argv[1]
 
 processed = json.loads(raw)
 

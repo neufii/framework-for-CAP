@@ -13,7 +13,20 @@ class AppServiceProvider extends ServiceProvider
      */
     public function register()
     {
-        //
+        $this->app->bind(
+            'App\Modules\Repositories\Interfaces\Generator',
+            'App\Modules\Repositories\SampleGenerator'
+        );
+
+        $this->app->bind(
+            'App\Modules\Repositories\Interfaces\Selector',
+            'App\Modules\Repositories\Selector'
+        );
+
+        $this->app->bind(
+            'App\Modules\Repositories\Interfaces\QuestionDisplay',
+            'App\Modules\Repositories\SampleQuestionDisplay'
+        );
     }
 
     /**

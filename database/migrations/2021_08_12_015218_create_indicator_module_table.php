@@ -13,10 +13,10 @@ class CreateIndicatorModuleTable extends Migration
      */
     public function up()
     {
-        Schema::create('indicator_module', function (Blueprint $table) {
+        Schema::create('indicator_script', function (Blueprint $table) {
             $table->id();
             $table->foreignId('indicator_id')->constrained('indicators')->onDelete('cascade');
-            $table->foreignId('compatible_module_id')->constrained('modules')->onDelete('cascade');
+            $table->foreignId('compatible_script_id')->constrained('scripts')->onDelete('cascade');
             $table->timestamps();
         });
     }
@@ -28,6 +28,6 @@ class CreateIndicatorModuleTable extends Migration
      */
     public function down()
     {
-        Schema::dropIfExists('indicator_module');
+        Schema::dropIfExists('indicator_script');
     }
 }
