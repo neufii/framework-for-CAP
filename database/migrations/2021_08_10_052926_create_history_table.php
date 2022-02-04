@@ -18,6 +18,7 @@ class CreateHistoryTable extends Migration
             $table->foreignId('learner_id')->constrained('learners')->onDelete('cascade');
             $table->foreignId('question_id')->constrained('question_instances')->onDelete('cascade');
             $table->longtext('answer');
+            $table->boolean('is_correct');
             $table->double('time_used')->nullable();
             $table->timestamps();
         });

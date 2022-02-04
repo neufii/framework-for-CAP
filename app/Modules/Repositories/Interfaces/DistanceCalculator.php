@@ -6,5 +6,5 @@ use App\Models\QuestionInstance;
 use App\Models\Learner;
 
 interface DistanceCalculator {
-    public function execute(array $questionIds);
+    public function execute(array $questionIds, float $threshold); //receive only question part of questionInstance
 } 

@@ -17,6 +17,11 @@ use App\Modules\Repositories\Interfaces\AnswerChecker;
 use App\Modules\Repositories\Interfaces\Updater;
 use App\Modules\Repositories\Interfaces\DistanceCalculator;
 
+use Spatie\TemporaryDirectory\TemporaryDirectory;
+use Symfony\Component\Process\Process;
+use Symfony\Component\Process\Exception\ProcessFailedException;
+use Carbon\Carbon;
+
 class QuestionInstanceService
 {
     private $questionInstance;
@@ -48,8 +53,9 @@ class QuestionInstanceService
         return $this;
     }
 
-    public function generate(Indicator $indicator, int $preferredLevel=null, Script $preferredGenerator=null){
-        $generated_question = $this->generator->execute($indicator, $preferredLevel, $preferredGenerator);
+    public function generate(Indicator $indicator, int $preferredLevel=null, Script $preferredGeneratorScript=null){
+        $generated_question = $this->generator->execute($indicator, $preferredLevel, $preferredGeneratorScript);
+        // var_dump($generated_question);
         if(!isset($generated_question)){
             return null;
         }
@@ -61,7 +67,7 @@ class QuestionInstanceService
         $question->solution = $generated_question['solution'];
         $question->initial_level = $generated_question['level'];
         $question->indicator_id = $indicator->id;
-        // $question->generator_id = $generator->id; ควรจะมีมั้ย? เพื่อจะได้ track ได้ว่ามาจาก script เบอร์ไหน
+        $question->generator_script_id = $generated_question['script_id'];
         $question->save();
 
         return $question;
@@ -98,7 +104,11 @@ class QuestionInstanceService
         $learnerService = new LearnerService($learner);
 
         $learnerAttempts = $learnerService->getStatistic($this->questionInstance->indicator)->total_attempts;
-        $learner->learningIndicators()->sync([$this->questionInstance->indicator_id => [ 'total_attempts' => $learnerAttempts+1] ], false);
+        $learnerCorrectAttempts = $learnerService->getStatistic($this->questionInstance->indicator)->correct_attempts;
+        $learner->learningIndicators()->sync([$this->questionInstance->indicator_id => [ 
+            'total_attempts' => $learnerAttempts+1,
+            'correct_attempts' => $learnerCorrectAttempts + ($isCorrect ? 1:0),
+        ] ], false);
 
         $newTotalAttempts = $this->questionInstance->total_attempts+1;
         $this->questionInstance->average_time_used = (($this->questionInstance->average_time_used * $this->questionInstance->total_attempts)+$timeUsed)/$newTotalAttempts;
@@ -127,10 +137,18 @@ class QuestionInstanceService
         ];
     }
 
-    public function evaluateUniqueness(array $questions){
-        $distanceMatrix = $this->distanceCalculator->execute($questions);
-        $processArray = ['python3', __DIR__."/Scripts/evaluator.py", $distanceFile, $threshold];
+    public function evaluateUniqueness(array $questions, float $threshold){
+        $distanceMatrix = $this->distanceCalculator->execute(array_column($questions, 'question')); //send only question part to calculator
 
+        $temporaryDirectory = (new TemporaryDirectory())->create();
+        $filename = $temporaryDirectory->path('distance.dat');
+        $dfp = fopen($distanceFile, 'a');
+        fwrite($dfp, $distanceMatrix);
+        fclose($dfp);
+
+        //clustering with evaluator.py
+        $processArray = ['python3', __DIR__."/Scripts/evaluator.py", $distanceFile, $threshold];
+        
         $process = new Process($processArray);
         $process->run();
         if (!$process->isSuccessful()) {
@@ -138,11 +156,19 @@ class QuestionInstanceService
         }
 
         $output = json_decode($process->getOutput());
-        $distanceDirectory->delete();
+        $temporaryDirectory->delete();
 
         $ids = [];
         foreach($output->sample_ids_in_largest_cluster as $id){
-            $ids[] = $id+$firstGeneratedQuestion;
+            $ids[] = $questions[$id]['id'];
         }
+
+        return [
+            'total_clusters' => $output->total_clusters,
+            'avg_questions_per_cluster' => $output->average_question_per_clusters,
+            'standard deviation' => $output->std,
+            'total_question_in_the_largest_cluster' => $output->questions_in_largest_cluster,
+            'example_ids_in_the_largest_cluster' => $ids,
+        ];
     }
 }

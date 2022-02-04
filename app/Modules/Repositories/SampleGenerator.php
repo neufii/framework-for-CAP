@@ -30,6 +30,8 @@ class SampleGenerator implements GeneratorInterface {
         $rawQuestion = $process->getOutput();
         $question = json_decode($rawQuestion,true);
 
+        $question['script_id'] = $generatorScript->id;
+
         return $question;
     }
 }

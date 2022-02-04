@@ -5,6 +5,7 @@ namespace App\Modules\Repositories;
 use App\Modules\Repositories\Interfaces\Updater as UpdaterInterface;
 
 use App\Models\QuestionInstance;
+use App\Models\Learner;
 
 use App\Services\LearnerService;
 

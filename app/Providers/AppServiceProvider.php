@@ -27,6 +27,26 @@ class AppServiceProvider extends ServiceProvider
             'App\Modules\Repositories\Interfaces\QuestionDisplay',
             'App\Modules\Repositories\SampleQuestionDisplay'
         );
+
+        $this->app->bind(
+            'App\Modules\Repositories\Interfaces\FeedbackDisplay',
+            'App\Modules\Repositories\SampleFeedbackDisplay'
+        );
+
+        $this->app->bind(
+            'App\Modules\Repositories\Interfaces\AnswerChecker',
+            'App\Modules\Repositories\SampleAnswerChecker'
+        );
+
+        $this->app->bind(
+            'App\Modules\Repositories\Interfaces\Updater',
+            'App\Modules\Repositories\Updater'
+        );
+
+        $this->app->bind(
+            'App\Modules\Repositories\Interfaces\DistanceCalculator',
+            'App\Modules\Repositories\SampleDistanceCalculator'
+        );
     }
 
     /**

@@ -6,6 +6,7 @@ use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\IndicatorController;
 use App\Http\Controllers\LearnerController;
 use App\Http\Controllers\QuestionInstanceController;
+use App\Http\Controllers\ReportController;
 
 /*
 |--------------------------------------------------------------------------
@@ -31,4 +32,9 @@ Route::get('indicators/{indicatorId}/get-question',[QuestionInstanceController::
 Route::put('questions/{questionId}/submit', [QuestionInstanceController::class, 'submit']);
 Route::put('questions/{questionId}/vote',[QuestionInstanceController::class, 'vote']);
 
-Route::get('questions/{id}/solution',[QuestionInstanceController::class, 'getSolution']);
+//reports
+Route::get('reports/system',[ReportController::class, 'getSystemReport']);
+Route::get('reports/indicator/{id}/uniqueness',[ReportController::class, 'getQuestionUniquenessReport']);
+Route::get('reports/indicator/{id}',[ReportController::class, 'getIndicatorReport']);
+Route::get('reports/question/{id}',[ReportController::class, 'getQuestionInstanceReport']);
+Route::get('reports/learner/{id}',[ReportController::class, 'getLearnerReport']);

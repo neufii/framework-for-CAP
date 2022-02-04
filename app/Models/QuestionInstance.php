@@ -18,7 +18,7 @@ class QuestionInstance extends Model
 
     public function history(){
         return $this->belongsToMany('App\Models\Learner', 'history', 'question_id', 'learner_id')
-        ->withPivot('answer', 'time_used')
+        ->withPivot('answer', 'is_correct', 'time_used')
         ->withTimestamps();
     }
 
