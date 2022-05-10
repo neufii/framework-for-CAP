@@ -10,12 +10,26 @@ use App\Models\Script;
 use App\Services\QuestionInstanceService;
 use App\Services\LearnerService;
 
+use App\Modules\Repositories\Interfaces\Generator;
+use App\Modules\Repositories\Interfaces\Selector;
+use App\Modules\Repositories\Interfaces\QuestionDisplay;
+use App\Modules\Repositories\Interfaces\FeedbackDisplay;
+use App\Modules\Repositories\Interfaces\AnswerChecker;
+use App\Modules\Repositories\Interfaces\Updater;
+use App\Modules\Repositories\Interfaces\DistanceCalculator;
+
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Validator;
 use Response;
 
 class ReportController extends Controller
 {
+    private $service;
+
+    public function __construct(QuestionInstanceService $service){
+        $this->service = $service;
+    }
+
     public function getSystemReport(){
 
         $totalIndicators = Indicator::get()->count();
@@ -33,29 +47,25 @@ class ReportController extends Controller
         ], 200);
     }
 
-    public function getQuestionUniquenessReport($indicatorId){
+    public function getQuestionUniquenessReport($generatorId, Request $request){
         //get params
-        $numberOfQuestions = Input::get('number_of_questions', 2000);
-        $threshold = Input::get('threshold', 0.5);
-        $preferredLevel = Input::get('level', NULL);
-        $preferredScriptId = Input::get('script_id', NULL);        
+        $numberOfQuestions = $request->input('number_of_questions', 2000);
+        $threshold = $request->input('threshold', 0.5);
+        $preferredLevel = $request->input('level', 2);
+        $generatorScript = Script::findOrFail($generatorId);
+        $indicator = $generatorScript->compatibleIndicators()->first();
 
-        if(isset($preferredScriptId)){
-            $preferredScript = Script::findOrFail($preferredScriptId);
-        }
-
-        $questionInstanceService = new QuestionInstanceService();
+        // $questionInstanceService = new QuestionInstanceService();
         $questions = [];
-        $indicator = Indicator::findOrFail($indicatorId);
 
         //generate new question for evaluation
         for($i = 0; $i < $numberOfQuestions; $i++){
-            $question = $questionInstanceService->generate($indicator, $preferredLevel, $preferredScript ? $preferredScript : NULL);
+            $question = $this->service->generate($indicator, $preferredLevel, $generatorScript);
             array_push($questions,$question);
         }
 
         //evaluate
-        $result = $questionInstanceService->evaluateUniqueness($questions, $threshold);
+        $result = $this->service->evaluateUniqueness($questions, $threshold, $indicator);
 
         return Response::json([
             'status' => 'completed',
@@ -69,7 +79,7 @@ class ReportController extends Controller
     }
 
     public function getIndicatorReport($indicatorId){
-        $indicator = Indicator::findOrFail($indicatorId);
+        $indicator = Indicator::with('compatibleScripts')->findOrFail($indicatorId);
         
         return Response::json([
             'status' => 'completed',

@@ -67,7 +67,7 @@ class IndicatorController extends Controller
         return Response::json([
             'status' => 'completed',
             'message' => 'Indicator Retreived',
-            'data' => Indicator::findOrFail($id),
+            'data' => Indicator::with('compatibleScripts')->findOrFail($id),
         ], 200);
     }
 

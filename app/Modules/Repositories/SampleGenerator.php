@@ -11,7 +11,7 @@ use Symfony\Component\Process\Exception\ProcessFailedException;
 
 class SampleGenerator implements GeneratorInterface {
  
-    public function execute(Indicator $indicator, int $preferredLevel=null, Script $defaultGenerator=null){
+    public function execute(Indicator $indicator, int $preferredLevel=2, Script $defaultGenerator=null){
         $generatorScript = $defaultGenerator ? $defaultGenerator : $indicator->compatibleScripts()->generator()->active()->latest()->first();
 
         if(!isset($generatorScript)){

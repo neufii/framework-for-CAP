@@ -53,7 +53,7 @@ class QuestionInstanceService
         return $this;
     }
 
-    public function generate(Indicator $indicator, int $preferredLevel=null, Script $preferredGeneratorScript=null){
+    public function generate(Indicator $indicator, int $preferredLevel=2, Script $preferredGeneratorScript=null){
         $generated_question = $this->generator->execute($indicator, $preferredLevel, $preferredGeneratorScript);
         // var_dump($generated_question);
         if(!isset($generated_question)){
@@ -137,17 +137,21 @@ class QuestionInstanceService
         ];
     }
 
-    public function evaluateUniqueness(array $questions, float $threshold){
-        $distanceMatrix = $this->distanceCalculator->execute(array_column($questions, 'question')); //send only question part to calculator
+    public function evaluateUniqueness(array $questions, float $threshold, Indicator $indicator){
+        $distanceMatrix = $this->distanceCalculator->execute(array_column($questions, 'question'), $threshold, $indicator); //send only question part to calculator
 
         $temporaryDirectory = (new TemporaryDirectory())->create();
-        $filename = $temporaryDirectory->path('distance.dat');
+        $distanceFile = $temporaryDirectory->path('distance.dat');
         $dfp = fopen($distanceFile, 'a');
-        fwrite($dfp, $distanceMatrix);
+        $distanceStr = '';
+        foreach($distanceMatrix as $key => $arr){
+             $distanceStr .= implode(',', $arr) . PHP_EOL;
+        }
+        fwrite($dfp, $distanceStr);
         fclose($dfp);
 
         //clustering with evaluator.py
-        $processArray = ['python3', __DIR__."/Scripts/evaluator.py", $distanceFile, $threshold];
+        $processArray = ['python3', dirname(__DIR__,1)."/Modules/Scripts/evaluator.py", $distanceFile, $threshold];
         
         $process = new Process($processArray);
         $process->run();

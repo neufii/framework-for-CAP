@@ -36,6 +36,10 @@ class QuestionInstanceController extends Controller
 
         $indicator = Indicator::findOrFail($indicatorId);
 
+        //if indicator is not added to learner's interessted list 
+        if(!$learner->learningIndicators()->where('indicator_id',$indicator->id)->first()){
+            $learner->learningIndicators()->attach($indicator,['rating' => 0 ,'total_attempts' => 0]);
+        }
         //check compatible question
         $instanceData = $this->service->select($learner, $indicator, $params['includeHistory'], $params['preferredLevel']);
         $instance = $instanceData['questionInstance'];
