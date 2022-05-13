@@ -2,15 +2,11 @@ import sys
 import re
 import json
 
-f = open(sys.argv[1], "r")
-argv = json.loads(f.read())
-raw = argv['0']
+raw = sys.argv[1]
 
-remove = raw.replace("\"", "\"")
-remove = remove.replace('\\\\', '\\')
+processed = json.loads(raw)
 
-jsonData = json.loads(remove)
-solution = jsonData["0"]
+solution = processed['0']
 
 output = "var json='{\"attrs\":{\"width\":800,\"height\":300},\"className\":\"Stage\",\"children\":[{\"attrs\":{},\"className\":\"Layer\",\"children\":[{\"attrs\":{\"width\":\"auto\",\"height\":\"auto\",\"text\":\" เฉลย: " + \
     solution + \

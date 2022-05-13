@@ -47,15 +47,16 @@ class ReportController extends Controller
         ], 200);
     }
 
-    public function getQuestionUniquenessReport($generatorId, Request $request){
+    public function getQuestionGeneratorAssessmentReport($generatorId, Request $request){
         //get params
-        $numberOfQuestions = $request->input('number_of_questions', 2000);
+        $numberOfQuestions = $request->input('number_of_questions', 100);
         $threshold = $request->input('threshold', 0.5);
         $preferredLevel = $request->input('level', 2);
         $generatorScript = Script::findOrFail($generatorId);
         $indicator = $generatorScript->compatibleIndicators()->first();
 
-        // $questionInstanceService = new QuestionInstanceService();
+        if($numberOfQuestions < 2) $numberOfQuestions = 2;
+
         $questions = [];
 
         //generate new question for evaluation
@@ -69,8 +70,9 @@ class ReportController extends Controller
 
         return Response::json([
             'status' => 'completed',
-            'message' => 'System Report Retreived',
+            'message' => 'Question Generator Assessment Report Retreived',
             'data' => [
+                'script_id' => $generatorId,
                 'total_question' => $numberOfQuestions,
                 'distance_threshold' => $threshold,
                 'statistic' => $result,
@@ -105,7 +107,7 @@ class ReportController extends Controller
 
         return Response::json([
             'status' => 'completed',
-            'message' => 'Indicator Report Retreived',
+            'message' => 'Question Report Retreived',
             'data' => [
                 'id' => $question->id,
                 'indicator' => $question->indicator,
@@ -125,23 +127,24 @@ class ReportController extends Controller
     
     public function getLearnerReport($learnerId){
         $learner = Learner::findOrFail($learnerId);
-        $indicators = $learner->indicators;
+        $indicators = $learner->learningIndicators;
 
         $learnerService = new LearnerService($learner);
         $indicatorsData = [];
 
-        foreach((array) $indicators as $indicator){
-            $stat = $learnerService->getStatistic($question->indicator);
+        foreach($indicators as $indicator){
+            $stat = $learnerService->getStatistic($indicator);
 
             $data = [];
             $data['id'] = $indicator->id;
             $data['name'] = $indicator->name;
             $data['description'] = $indicator->description;
             $data['statistic'] = [
-                'rating' => $stat->rating,
-                'total_attempts' => $stat->total_attempts,
-                'total_correct_attempts' => $stat->correct_attempts,
-                'average time used' => $stat->average_time_used
+                'rating' => $stat["rating"],
+                'total_attempts' => $stat["total_attempts"],
+                'unique_question_total_attempts' => $stat["unique_question_total_attempts"],
+                'total_correct_attempts' => $stat["correct_attempts"],
+                'average time used' => $stat["average_time_used"]
             ];
 
             array_push($indicatorsData,$data);
@@ -151,8 +154,8 @@ class ReportController extends Controller
             'status' => 'completed',
             'message' => 'Learner Report Retreived',
             'data' => [
-                'learner' => $learner,
-                'indicators' => $indicatorsData,
+                'learner_id' => $learner->id,
+                'interested_indicators' => $indicatorsData,
             ],
         ], 200);
     }

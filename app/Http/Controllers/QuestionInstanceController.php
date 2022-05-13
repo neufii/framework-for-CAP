@@ -98,20 +98,20 @@ class QuestionInstanceController extends Controller
         }
         
         $question = QuestionInstance::findOrFail($id);
-        $isCorrect = $this->service->setQuestionInstance($instance)->check($learner, $request['answer']);
+        $isCorrect = $this->service->setQuestionInstance($question)->check($request['answer']);
 
         //update rating
-        $isCorrect = $this->service->setQuestionInstance($instance)->updateRating($learner, $isCorrect);
+        $this->service->updateRating($learner, $isCorrect);
 
         //update history
-        $this->service->setQuestionInstance($instance)->addHistory($learner, $learnerAnswer,$isCorrect, $timeUsed);
+        $this->service->addHistory($learner, $request['answer'], $isCorrect, (int) $request['time_used']);
 
         //feedback
-        $script = $this->service->setQuestionInstance($instance)->getDisplayableFeedbackScript($isCorrect, $request['answer']);
+        $script = $this->service->getDisplayableFeedbackScript($isCorrect, $request['answer']);
 
         //learner's rating
         $learnerService = new LearnerService($learner);
-        $learnerRating = $learnerService->getStatistic($question->indicator)->rating;
+        $learnerRating = $learnerService->getStatistic($question->indicator)['rating'];
 
         return Response::json([
             'status' => 'completed',
@@ -139,7 +139,7 @@ class QuestionInstanceController extends Controller
 
         $question = QuestionInstance::findOrFail($id);
 
-        $votes = $this->service->setQuestionInstance($instance)->vote($request['action']);
+        $votes = $this->service->setQuestionInstance($question)->vote($request['action']);
 
         return Response::json([
             'status' => 'completed',

@@ -17,9 +17,9 @@ class Updater implements UpdaterInterface {
     public function execute(QuestionInstance $questionInstance, Learner $learner, bool $isCorrect){
         $questionRating = $questionInstance->rating;
         $learnerService = new LearnerService($learner);
-        $learnerStat = $learnerService->getStatistic($question->indicator);
-        $learnerRating = $learnerStat->rating;
-        $learnerAttempts = $learnerStat->total_attempts;
+        $learnerStat = $learnerService->getStatistic($questionInstance->indicator);
+        $learnerRating = $learnerStat["rating"];
+        $learnerAttempts = $learnerStat["total_attempts"];
         $score = $isCorrect ? 1 : 0;
 
         $questionUncertaincy = 1/(1+(0.05*$questionInstance->totalAttempts));

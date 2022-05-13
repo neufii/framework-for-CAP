@@ -55,7 +55,6 @@ class QuestionInstanceService
 
     public function generate(Indicator $indicator, int $preferredLevel=2, Script $preferredGeneratorScript=null){
         $generated_question = $this->generator->execute($indicator, $preferredLevel, $preferredGeneratorScript);
-        // var_dump($generated_question);
         if(!isset($generated_question)){
             return null;
         }
@@ -68,6 +67,8 @@ class QuestionInstanceService
         $question->initial_level = $generated_question['level'];
         $question->indicator_id = $indicator->id;
         $question->generator_script_id = $generated_question['script_id'];
+        $question->rating = 0.0;
+        $question->total_attempts = 0;
         $question->save();
 
         return $question;
@@ -85,29 +86,30 @@ class QuestionInstanceService
         return $this->feedbackDisplay->execute($this->questionInstance, $isCorrect, $learnerAnswer);
     }
 
-    public function check(Learner $learner, string $learnerAnswer){
+    public function check(string $learnerAnswer){
         return $this->answerChecker->execute($this->questionInstance, $learnerAnswer);
     }
 
     public function updateRating(Learner $learner, bool $isCorrect){
-        $ratings = $this->updater->execute($this->$questionInstance, $learner, $isCorrect);
+        $ratings = $this->updater->execute($this->questionInstance, $learner, $isCorrect);
 
-        $this->questionInstance->rating = $ratings['questionInstanceRating'];
+        $this->questionInstance->rating = $ratings['questionRating'];
         $this->questionInstance->save();
         
         $learner->learningIndicators()->sync([$this->questionInstance->indicator_id => [ 'rating' => $ratings['learnerRating']] ], false);
     }
 
-    public function addHistory(Learner $learner, string $learnerAnswer, bool $isCorrect, integer $timeUsed){
-        $learner->history()->attach($this->questionInstance,['answer' => $learnerAnswer ,'time_used' => $timeUsed]);
+    public function addHistory(Learner $learner, string $learnerAnswer, bool $isCorrect, int $timeUsed){
+        $learner->history()->attach($this->questionInstance,['answer' => $learnerAnswer, 'is_correct' => $isCorrect ,'time_used' => $timeUsed]);
 
         $learnerService = new LearnerService($learner);
+        $learnerStat = $learnerService->getStatistic($this->questionInstance->indicator);
+        $learnerAttempts = $learnerStat["total_attempts"];
+        $learnerCorrectAttempts = $learnerStat["correct_attempts"];
 
-        $learnerAttempts = $learnerService->getStatistic($this->questionInstance->indicator)->total_attempts;
-        $learnerCorrectAttempts = $learnerService->getStatistic($this->questionInstance->indicator)->correct_attempts;
         $learner->learningIndicators()->sync([$this->questionInstance->indicator_id => [ 
             'total_attempts' => $learnerAttempts+1,
-            'correct_attempts' => $learnerCorrectAttempts + ($isCorrect ? 1:0),
+            // 'correct_attempts' => $learnerCorrectAttempts + ($isCorrect ? 1:0),
         ] ], false);
 
         $newTotalAttempts = $this->questionInstance->total_attempts+1;
@@ -124,11 +126,11 @@ class QuestionInstanceService
     public function vote(string $action){
         if($action == 'upvote'){
             $this->questionInstance->upvotes += 1;
-            $this->setQuestionInstance->save();
+            $this->questionInstance->save();
         }
         else if($action == 'downvote'){
             $this->questionInstance->downvotes += 1;
-            $this->setQuestionInstance->save();
+            $this->questionInstance->save();
         }
 
         return [
