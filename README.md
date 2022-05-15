@@ -17,3 +17,6 @@ To run the example client application
 4. Run `npm install` in the client project folder
 5. Run `npm start` in the client project folder
 6. Visit `localhost:3000` for the example client application
+
+### Making Change
+To change the code of each module (such as a question instance generator) simply edit the files under `App\Modules\Repositories`.
